@@ -11,6 +11,10 @@ services:
       OJS_DB_USER: ${DB_USER:-ojs}
       OJS_DB_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
       OJS_DB_NAME: ${DB_NAME:-ojs}
+      DB_HOST: db
+      DB_USER: ${DB_USER:-ojs}
+      DB_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
+      DB_NAME: ${DB_NAME:-ojs}
       OJS_CLI_INSTALL: ${OJS_CLI_INSTALL:-0}
     volumes:
       # Persistent storage untuk file submission / dokumen naskah
@@ -19,6 +23,8 @@ services:
       - ojs_public:/var/www/html/public
       # Custom PHP settings (upload size, execution time, timezone)
       - ./php-custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+      # [Opsional] Persistent config.inc.php (aktifkan baris di bawah setelah install OJS di browser):
+      # - ./config.inc.php:/var/www/html/config.inc.php
     depends_on:
       db:
         condition: service_healthy
@@ -32,11 +38,16 @@ services:
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
+      - --max-allowed-packet=128M
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_pass123}
       MYSQL_DATABASE: ${DB_NAME:-ojs}
       MYSQL_USER: ${DB_USER:-ojs}
       MYSQL_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_pass123}
+      MARIADB_DATABASE: ${DB_NAME:-ojs}
+      MARIADB_USER: ${DB_USER:-ojs}
+      MARIADB_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -44,7 +55,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 15s
+      start_period: 30s
     networks:
       - ojs_network
 
@@ -57,7 +68,7 @@ services:
     profiles:
       - tools
     ports:
-      - "3201:80"
+      - "${PMA_PORT:-3201}:80"
     environment:
       PMA_HOST: db
       PMA_USER: ${DB_USER:-ojs}

@@ -41,13 +41,15 @@ git clone <URL_REPOSITORY_ANDA>
 cd journal_system
 ```
 
-### 2. (Opsional) Sesuaikan Pengaturan di `.env`
-Buka file `.env` jika ingin mengubah password database atau domain:
+### 2. Buat & Sesuaikan Pengaturan di `.env`
+Salin template `.env.example` menjadi `.env` (jika belum ada) lalu sesuaikan:
 ```bash
+cp .env.example .env
 nano .env
 ```
 Default bawaan:
 - **Port OJS**: `3200`
+- **Port phpMyAdmin**: `3201`
 - **Database Name**: `ojs`
 - **Database User**: `ojs`
 - **Database Password**: `ojs_secure_pass123`
@@ -87,6 +89,18 @@ docker compose ps
      - **PENTING**: **Hapus centang (uncheck)** pada *"Create new database"* karena database sudah dibuat otomatis oleh MariaDB.
 4. Klik tombol **Install Open Journal Systems** di bagian paling bawah.
 5. Tunggu proses instalasi database selesai. Anda akan diarahkan langsung ke halaman dashboard OJS!
+6. **PENTING: Amankan File `config.inc.php` ke Host**:
+   Saat OJS diinstal via browser, file konfigurasi tersimpan di dalam container `ojs_app`. Agar konfigurasi ini tidak terhapus jika container di-`docker compose down`, salin file tersebut ke host:
+   ```bash
+   docker compose cp ojs_app:/var/www/html/config.inc.php ./config.inc.php
+   ```
+   Lalu buka `docker-compose.yml` dan hapus tanda `#` pada baris volume konfigurasi:
+   ```yaml
+       volumes:
+         ...
+         - ./config.inc.php:/var/www/html/config.inc.php
+   ```
+   Dengan langkah ini, OJS Anda 100% persisten dan aman dari `docker compose down`.
 
 ---
 

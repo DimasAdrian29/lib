@@ -1,5 +1,8 @@
-# Environment variables (opsional jika ingin dirahasiakan di repository publik)
-# .env
+# Environment variables
+.env
+
+# Configuration persistence (setelah instalasi OJS)
+config.inc.php
 
 # Database dumps / backups
 *.sql
