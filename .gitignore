@@ -1,0 +1,13 @@
+# Environment variables (opsional jika ingin dirahasiakan di repository publik)
+# .env
+
+# Database dumps / backups
+*.sql
+*.sql.gz
+*.tar.gz
+
+# System & Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

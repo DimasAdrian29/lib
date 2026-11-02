@@ -1,0 +1,82 @@
+services:
+  ojs:
+    image: pkpofficial/ojs:stable-3_4_0
+    container_name: ojs_app
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-3200}:80"
+    environment:
+      SERVERNAME: ${SERVERNAME:-localhost}
+      OJS_DB_HOST: db
+      OJS_DB_USER: ${DB_USER:-ojs}
+      OJS_DB_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
+      OJS_DB_NAME: ${DB_NAME:-ojs}
+      OJS_CLI_INSTALL: ${OJS_CLI_INSTALL:-0}
+    volumes:
+      # Persistent storage untuk file submission / dokumen naskah
+      - ojs_files:/var/www/files
+      # Persistent storage untuk file publik (logo, cover jurnal, css)
+      - ojs_public:/var/www/html/public
+      # Custom PHP settings (upload size, execution time, timezone)
+      - ./php-custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ojs_network
+
+  db:
+    image: mariadb:10.11
+    container_name: ojs_db
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_secure_pass123}
+      MYSQL_DATABASE: ${DB_NAME:-ojs}
+      MYSQL_USER: ${DB_USER:-ojs}
+      MYSQL_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - ojs_network
+
+  # [Opsional] Database Management GUI via phpMyAdmin
+  # Jalankan dengan: docker compose --profile tools up -d
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ojs_phpmyadmin
+    restart: unless-stopped
+    profiles:
+      - tools
+    ports:
+      - "3201:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER:-ojs}
+      PMA_PASSWORD: ${DB_PASS:-ojs_secure_pass123}
+      UPLOAD_LIMIT: 128M
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - ojs_network
+
+volumes:
+  db_data:
+    name: ojs_db_data
+  ojs_files:
+    name: ojs_files_data
+  ojs_public:
+    name: ojs_public_data
+
+networks:
+  ojs_network:
+    name: ojs_network
